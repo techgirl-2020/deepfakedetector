@@ -1,0 +1,130 @@
+name: deepfake-detector
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    ports:
+      - "80:80"
+      - "8080:8080"
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.traefik.address=:8080"
+
+    volumes:
+      - ./traefik.yml:/etc/traefik/dynamic.yml:ro
+
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: auth_db
+    volumes:
+      - auth_db_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    volumes:
+      - ./auth-service:/app
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.auth.rule: "PathPrefix(`/auth`)"
+      traefik.http.services.auth.loadbalancer.server.port: "8001"
+
+  consul:
+    image: consul:1.15
+    container_name: consul
+    ports:
+      - "8501:8500"
+    command: "agent -dev -client=0.0.0.0"
+
+  user-db:
+    image: mysql:8.0
+    container_name: user-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: user_db
+    volumes:
+      - user_db_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    volumes:
+      - ./user-service:/app
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8001
+    depends_on:
+      user-db:
+        condition: service_healthy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.user.rule: "PathPrefix(`/user`)"
+      traefik.http.services.user.loadbalancer.server.port: "8002"
+
+  ai-service:
+    build: ./ai-service
+    container_name: ai-service
+    environment:
+      MODEL_BACKEND: local
+      LOCAL_MODEL_PATH: model.SigLIP
+      WARMUP_CLIP_ON_STARTUP: "true"
+      WEIGHT_V2: "0.4"
+      WEIGHT_CLIP: "0.6"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    ports:
+      - "8500:80" # Mapping external 8500 to internal 80 (Nginx default)
+    labels:
+      traefik.enable: "true"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin1234
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  worker-service:
+    build: ./worker-service
+    container_name: worker-service
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      user-db:
+        condition: service_healthy
+
+volumes:
+  auth_db_data:
+  user_db_data:
+  hf_cache:

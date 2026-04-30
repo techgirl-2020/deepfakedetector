@@ -1,0 +1,33 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.vscode/
+.idea/
+
+.env
+.env.*
+
+node_modules/
+dist/
+build/
+
+*.log
+*.sqlite3
+
+# Docker & Persistence
+auth_db_data/
+user_db_data/
+hf_cache/
+.docker/
+
+# Models
+ai-service/model.SigLIP
+ai-service/*.pth
+ai-service/*.bin

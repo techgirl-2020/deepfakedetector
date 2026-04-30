@@ -1,0 +1,65 @@
+http:
+  routers:
+    auth:
+      rule: "PathPrefix(`/auth`)"
+      entryPoints:
+        - web
+      service: auth-service
+      priority: 100
+
+    user:
+      rule: "PathPrefix(`/user`)"
+      entryPoints:
+        - web
+      middlewares:
+        - user-rewrite
+      service: user-service
+      priority: 100
+
+    ai:
+      rule: "PathPrefix(`/ai`)"
+      entryPoints:
+        - web
+      middlewares:
+        - ai-strip-prefix
+      service: ai-service
+      priority: 100
+
+    frontend:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: frontend
+      priority: 1
+
+  middlewares:
+    user-rewrite:
+      replacePathRegex:
+        regex: "^/user/(.*)"
+        replacement: "/users/$1"
+
+    ai-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - "/ai"
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://auth-service:8001"
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://user-service:8002"
+
+    ai-service:
+      loadBalancer:
+        servers:
+          - url: "http://ai-service:8003"
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:80"

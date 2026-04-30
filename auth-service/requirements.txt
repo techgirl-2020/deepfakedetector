@@ -1,0 +1,8 @@
+django==4.2
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0
+PyMySQL==1.1.0
+django-cors-headers==4.3.1
+PyMySQL
+django-cors-headers==4.3.1
+cryptography==41.0.7
