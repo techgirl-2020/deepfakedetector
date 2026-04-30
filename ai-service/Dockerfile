@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download CLIP model to ensure it's available and ready
+RUN python -c "from transformers import CLIPModel, CLIPProcessor; CLIPModel.from_pretrained('openai/clip-vit-base-patch32'); CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')"
+
 COPY . .
 
 EXPOSE 8003
