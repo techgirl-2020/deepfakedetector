@@ -88,14 +88,14 @@ services:
       LOCAL_MODEL_PATH: model.SigLIP
       WARMUP_CLIP_ON_STARTUP: "true"
       CLIP_LOCAL_FILES_ONLY: "false"
-      WEIGHT_V2: "0.5"
-      WEIGHT_CLIP: "0.5"
+      WEIGHT_V2: "0.9"
+      WEIGHT_CLIP: "0.1"
       CLIP_REAL_PROMPT: "a natural photograph of a human face with realistic skin texture, pores, and natural lighting"
       CLIP_FAKE_PROMPT: "a synthetic AI-generated image, deepfake, or digitally smoothed face with artificial features"
     volumes:
       - ./ai-service:/app
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
       interval: 15s
       timeout: 10s
       retries: 20

@@ -91,6 +91,14 @@ const api = {
 
     const data = await res.json().catch(() => ({}));
 
+    if (res.status === 401) {
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      localStorage.removeItem('user');
+      window.location.href = 'index.html';
+      throw new Error('Session expired. Please log in again.');
+    }
+
     if (!res.ok) {
       throw new Error(formatApiError(data));
     }
