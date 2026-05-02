@@ -29,5 +29,5 @@ hf_cache/
 
 # Models
 ai-service/model.SigLIP
-ai-service/*.pth
+
 ai-service/*.bin
